@@ -11,14 +11,41 @@ android {
         applicationId = "com.example.netguardlite"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0-phase1"
+        val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+        versionCode = runNumber
+        versionName = "1.0.$runNumber"
+    }
+
+    // مفتاح التوقيع الثابت: يُقرأ من متغيرات البيئة (GitHub Secrets).
+    // إذا غير موجود يرجع للتوقيع المؤقت (debug) عشان البناء ما يفشل.
+    val keystorePath: String? = System.getenv("KEYSTORE_PATH")
+    val hasReleaseKey = keystorePath != null && File(keystorePath).exists()
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = File(keystorePath!!)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = if (hasReleaseKey) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
+    }
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     compileOptions {

@@ -8,3 +8,7 @@
 .externalNativeBuildAndroid
 app/build/
 *.apk
+
+*.jks
+*.keystore
+key.txt
